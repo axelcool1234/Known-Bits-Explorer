@@ -1,0 +1,36 @@
+# The example that motivated the explorer.
+add nuw 0000????, 1000????
+
+# A case where nuw makes a visible difference.
+compare add 1111????, 00000001
+
+# More LLVM KnownBits transfer functions.
+mul 0000????, 00000010
+shl nuw 0000????, 00000010
+lshr exact 10??0000, 00000010
+ashr 10??0011, 00000010
+smin 10??0011, 00110000
+
+# Exact bitwise transfer.
+xor 01011010, 00111100
+
+# Correlated self-add uses LLVM's dedicated SelfAdd path.
+add self ????????
+
+# SSA-style variables feed earlier results into later expressions.
+%x = xor 01011010, 00111100
+%y = add %x, 00000001
+
+# Reusing the same SSA value selects LLVM's correlated SelfAdd path.
+%unknown = and ????????, ????????
+%double = add %unknown, %unknown
+
+# Exhaustive concrete evaluation shows precision and SSA-correlation gaps.
+exhaust add nuw 0000????, 1000????
+exhaust add nuw 1111????, 00000001
+exhaust udiv exact 0001????, 00000010
+exhaust xor %unknown, %unknown
+
+# Width-changing transfers use an explicit destination width.
+%wide = zext 10??0011 to 12
+%narrow = trunc %wide to 4
